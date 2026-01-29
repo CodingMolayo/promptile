@@ -1,65 +1,131 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React, { useState, useEffect } from 'react';
+import { Menu } from 'lucide-react';
+import SessionList from './SessionList/SessionList';
+import BlockBoard from './BlockBoard/BlockBoard';
+import BlockModal from './BlockModal/BlockModal';
+import { useSession } from '@/hooks/useSession';
+import { useBlocks } from '@/hooks/useBlocks';
+import { useModal } from '@/hooks/useModal';
+
+export default function BlockLLMChatApp() {
+  // 1. Hook에서 삭제/수정 함수 가져오기
+  const { 
+    sessions, 
+    currentSessionId, 
+    setCurrentSessionId, 
+    createSession, 
+    updateSessionTitle, 
+    deleteSession 
+  } = useSession();
+  
+  // clearBlocks는 이제 사용하지 않으므로 제거합니다.
+  const { 
+    blocks, 
+    updateBlockQuestion, 
+    updateBlockPosition, 
+    createBlockWithAI 
+  } = useBlocks();
+  
+  const { isOpen, mode, selectedBlock, openModal, closeModal } = useModal();
+  
+  const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // 반응형 사이드바 설정
+  useEffect(() => {
+    const checkMobile = () => setSidebarOpen(window.innerWidth >= 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const handleNewSession = () => {
+    createSession();
+    // 중요: 더 이상 clearBlocks()를 호출하지 않습니다. 
+    // 모든 데이터는 유지되고, 아래 currentBlocks 필터링으로 화면을 제어합니다.
+  };
+
+  const handleSelectSession = (id: string) => {
+    setCurrentSessionId(id);
+    if (window.innerWidth < 768) setSidebarOpen(false);
+  };
+
+  const handleSubmitQuestion = (question: string) => {
+    if (!currentSessionId) return;
+
+    // 위치 계산 로직
+    const currentSessionBlocks = blocks.filter(b => b.sessionId === currentSessionId);
+    let position = { x: 20, y: 20 };
+    
+    if (selectedBlock) {
+      position = { x: selectedBlock.position.x + 350, y: selectedBlock.position.y + 100 };
+    } else {
+      // 부모가 없는 최상위 블록 갯수 기준 배치
+      const gridIndex = currentSessionBlocks.filter(b => !b.parentBlockId).length;
+      position = { 
+        x: (gridIndex % 3) * 320 + 20, 
+        y: Math.floor(gridIndex / 3) * 280 + 20 
+      };
+    }
+
+    createBlockWithAI(currentSessionId, question, position, selectedBlock?.id);
+    closeModal();
+  };
+
+  // 핵심: 전체 블록 중에서 '현재 세션'에 해당하는 것만 필터링해서 Board에 전달
+  const currentBlocks = blocks.filter(b => b.sessionId === currentSessionId);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* 모바일 메뉴 버튼 */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border"
+      >
+        <Menu size={24} />
+      </button>
+
+      {/* 모바일 배경 오버레이 */}
+      {sidebarOpen && <div className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-30" onClick={() => setSidebarOpen(false)} />}
+
+      {/* 사이드바 (Session List) */}
+      <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 fixed md:relative z-40 h-full shadow-xl md:shadow-none`}>
+        <SessionList
+          sessions={sessions}
+          currentSessionId={currentSessionId}
+          onSelectSession={handleSelectSession}
+          onNewSession={handleNewSession}
+          onUpdateTitle={updateSessionTitle} // 전달
+          onDeleteSession={deleteSession}   // 전달
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </div>
+
+      {/* 메인 영역 (Block Board) */}
+      <div className="flex-1 overflow-hidden relative">
+        <BlockBoard
+          blocks={currentBlocks} // 필터링된 블록만 전달
+          activeBlockId={activeBlockId}
+          onBlockClick={(id) => setActiveBlockId(activeBlockId === id ? null : id)}
+          onViewBlock={(b) => openModal('view', b)}
+          onEditBlock={(b) => openModal('edit', b)}
+          onContinueBlock={(b) => openModal('continue', b)}
+          onCreateBlock={() => openModal('continue', null)}
+          onBlockPositionUpdate={updateBlockPosition}
+        />
+      </div>
+
+      {/* 모달 팝업 */}
+      {isOpen && (
+        <BlockModal
+          mode={mode}
+          block={selectedBlock}
+          onClose={closeModal}
+          onSubmit={handleSubmitQuestion}
+          onUpdate={(id, q) => { updateBlockQuestion(id, q); closeModal(); }}
+        />
+      )}
     </div>
   );
 }
