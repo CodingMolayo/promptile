@@ -12,7 +12,7 @@ export default function EmptyBoardState({ onCreateBlock }: { onCreateBlock: () =
           onClick={onCreateBlock}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          Create First Block
+          Tile your first Prompt
         </button>
       </div>
     </div>

@@ -52,7 +52,7 @@ Blocks are **visual objects**, not chat messages.
 ## 4. High-level UI Layout
 
 - **Left**: Session List (Chat-style navigation)
-- **Center**: Block Board (Mindmap style block visualization)
+- **Center**: Block Board (Grid-based block visualization)
 - **Overlay**: Block-centered pop-up (modal)
 
 There is no right-side fixed panel in MVP.
@@ -122,29 +122,20 @@ app/
         └── BlockContinueForm.tsx # Continue mode (new question)
 
 api/
-├── sessions/
-│   ├── route.ts                # GET/POST sessions
-│   └── [id]/
-│       └── route.ts            # GET/PATCH/DELETE session
-│
-├── blocks/
-│   ├── route.ts                # POST new block
-│   └── [id]/
-│       └── route.ts            # GET/PATCH/DELETE block
-│
-└── llm/
-    └── generate/
-        └── route.ts            # Gemini API proxy
+├── generate/
+       └── route.ts                # Gemini API proxy
 
 lib/
 ├── gemini.ts                   # Gemini API client
+├── firebase.ts                 
 ├── types.ts                    # TypeScript types (Session, Block)
 └── storage.ts                  # Data persistence logic
 
 hooks/
 ├── useSession.ts               # Session state management
 ├── useBlocks.ts                # Block CRUD operations
-└── useModal.ts                 # Modal open/close state
+├── useAuth.ts                 # user login
+└── useModal.ts                # Modal open/close state
 
 ---
 
@@ -152,13 +143,14 @@ hooks/
 
 ### In Scope (MVP)
 - Block-based UI
-- Mindmap-style Block Board
-- Free block positioning
+- Grid-style Block Board
 - Block-centered modal interaction
 - Gemini API integration
 - Session-based navigation
 
 ### Out of Scope
-- Full graph 
+- Free block positioning
+- Full graph / mind-map editor
 - Block version history
 - Collaboration / sharing
+- Mobile optimization
