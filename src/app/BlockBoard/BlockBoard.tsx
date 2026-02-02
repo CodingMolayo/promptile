@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { Plus } from 'lucide-react';
 import { Block } from '@/lib/types';
 import BlockCard from './BlockCard';

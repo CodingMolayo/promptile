@@ -10,10 +10,12 @@ export function useSession() {
   useEffect(() => {
     const saved = storage.loadSessions();
     if (saved.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSessions(saved);
       setCurrentSessionId(saved[0].id);
     } else {
       const defaultSession = { id: '1', title: 'New Conversation', createdAt: new Date() };
+       
       setSessions([defaultSession]);
       setCurrentSessionId('1');
       storage.saveSessions([defaultSession]);

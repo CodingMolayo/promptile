@@ -8,6 +8,7 @@ export function useBlocks() {
 
   // 1. 초기 로드
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBlocks(storage.loadBlocks());
   }, []);
 

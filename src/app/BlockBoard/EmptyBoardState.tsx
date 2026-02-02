@@ -1,5 +1,5 @@
-import React from 'react';
-import { MessageSquare, Plus } from 'lucide-react';
+
+import { MessageSquare } from 'lucide-react';
 
 export default function EmptyBoardState({ onCreateBlock }: { onCreateBlock: () => void }) {
   return (
