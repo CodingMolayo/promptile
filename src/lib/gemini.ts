@@ -22,5 +22,3 @@ export const generateAnswer = async (question: string): Promise<string> => {
       return "죄송합니다. 현재 AI 서버와 연결할 수 없습니다. 잠시 후 다시 시도해주세요.";
     }
   };
-  
-  // (참고) mockGenerateAnswer 함수는 이제 지우셔도 됩니다.

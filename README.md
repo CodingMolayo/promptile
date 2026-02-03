@@ -123,10 +123,10 @@ app/
 
 api/
 ├── generate/
-       └── route.ts                # Gemini API proxy
+       └── route.ts                # groq API proxy
 
 lib/
-├── gemini.ts                   # Gemini API client
+├── gemini.ts                   # groq API client
 ├── firebase.ts                 
 ├── types.ts                    # TypeScript types (Session, Block)
 └── storage.ts                  # Data persistence logic
@@ -143,14 +143,13 @@ hooks/
 
 ### In Scope (MVP)
 - Block-based UI
-- Grid-style Block Board
+- mind-map style Free block positioning
 - Block-centered modal interaction
 - Gemini API integration
 - Session-based navigation
 
 ### Out of Scope
-- Free block positioning
-- Full graph / mind-map editor
+- Full graph 
 - Block version history
 - Collaboration / sharing
 - Mobile optimization
