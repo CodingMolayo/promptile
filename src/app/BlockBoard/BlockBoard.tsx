@@ -1,3 +1,5 @@
+//===src/app/BlockBoard/BlockBoard.tsx
+
 import React from 'react';
 import { Plus } from 'lucide-react';
 import { Block } from '@/lib/types';
@@ -8,17 +10,26 @@ function ConnectionLines({ blocks }: { blocks: Block[] }) {
   const lines = blocks.filter(block => block.parentBlockId).map(block => {
     const parent = blocks.find(b => b.id === block.parentBlockId);
     if (!parent) return null;
-    const startX = parent.position.x + 140;
+    
+    const startX = parent.position.x + 150;
     const startY = parent.position.y + 100;
-    const endX = block.position.x + 140;
+    const endX = block.position.x + 150;
     const endY = block.position.y + 100;
     const midX = (startX + endX) / 2;
+
+    // Dirty 블록은 주황색으로
+    const strokeColor = block.isDirty ? '#f97316' : '#3b82f6';
+    const strokeDasharray = block.isDirty ? '4,4' : '8,4';
 
     return (
       <path
         key={`line-${parent.id}-${block.id}`}
         d={`M ${startX} ${startY} C ${midX} ${startY}, ${midX} ${endY}, ${endX} ${endY}`}
-        stroke="#3b82f6" strokeWidth="3" fill="none" strokeDasharray="8,4" opacity="0.6"
+        stroke={strokeColor}
+        strokeWidth="3"
+        fill="none"
+        strokeDasharray={strokeDasharray}
+        opacity={block.isDirty ? 0.4 : 0.6}
       />
     );
   });
@@ -38,6 +49,7 @@ interface BlockBoardProps {
   onContinueBlock: (block: Block) => void;
   onCreateBlock: () => void;
   onBlockPositionUpdate: (blockId: string, position: { x: number; y: number }) => void;
+  onRegenerateBlock?: (blockId: string) => void;
 }
 
 export default function BlockBoard(props: BlockBoardProps) {
@@ -57,9 +69,10 @@ export default function BlockBoard(props: BlockBoardProps) {
             onEdit={props.onEditBlock}
             onContinue={props.onContinueBlock}
             onPositionUpdate={props.onBlockPositionUpdate}
+            onRegenerate={props.onRegenerateBlock}
           />
         ))}
-        <button onClick={props.onCreateBlock} className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center z-20">
+        <button onClick={props.onCreateBlock} className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center z-20 hover:bg-blue-700 transition-colors">
           <Plus size={24} />
         </button>
       </div>

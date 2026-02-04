@@ -1,3 +1,5 @@
+//===src/hooks/useModal.ts
+
 import { useState } from 'react';
 import { Block, ModalMode } from '@/lib/types';
 

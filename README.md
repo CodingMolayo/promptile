@@ -10,9 +10,9 @@ where answers are visually organized, easy to scan, and easy to revisit.
 
 > Core Value:  
 > One question + one answer = one Block.
+> Head-Body-Tail structure(like blockchain)
 
-The goal of this MVP is **not** advanced chaining or graph editing,
-but making LLM answers **readable, scannable, and reusable**.
+Make LLM answers **readable, scannable, and reusable**.
 
 ---
 
@@ -76,12 +76,12 @@ All interactions are **click-based** (no hover dependency).
 
 ## 6. LLM Integration (MVP)
 
-- LLM Provider: **Google Gemini API**
+- LLM Provider: **groq API**
 - Each block triggers **one independent LLM request**
 - No continuous chat context
 - Optional: parent block content may be passed as context
 
-Summary generation is **not included** in MVP.
+Sesstion Summary is **not included** in MVP.
 Block previews use truncated text from the original answer.
 
 ---
@@ -104,10 +104,9 @@ app/
 ├── layout.tsx
 └── page.tsx                    # Main container
     │
-    ├── SessionList/            # Left sidebar
-    │   ├── SessionList.tsx
-    │   ├── SessionItem.tsx
-    │   └── NewSessionButton.tsx
+    ├── api/
+    │   └── generate/
+    │          └── route.ts                # groq API proxy    
     │
     ├── BlockBoard/             # Center grid area
     │   ├── BlockBoard.tsx
@@ -115,27 +114,29 @@ app/
     │   ├── BlockActionMenu.tsx # Icons: View/Continue/Edit
     │   └── EmptyBoardState.tsx
     │
-    └── BlockModal/             # Overlay popup
-        ├── BlockModal.tsx      # Modal wrapper
-        ├── BlockDetailView.tsx # View mode (Q&A display)
-        ├── BlockEditForm.tsx   # Edit mode (question edit)
-        └── BlockContinueForm.tsx # Continue mode (new question)
-
-api/
-├── generate/
-       └── route.ts                # groq API proxy
-
-lib/
-├── gemini.ts                   # groq API client
-├── firebase.ts                 
-├── types.ts                    # TypeScript types (Session, Block)
-└── storage.ts                  # Data persistence logic
+    ├── BlockModal/             # Overlay popup
+    │   ├── BlockModal.tsx      # Modal wrapper
+    │   ├── BlockDetailView.tsx # View mode (Q&A display)
+    │   ├── BlockEditForm.tsx   # Edit mode (question edit)
+    │   └── BlockContinueForm.tsx # Continue mode (new question)
+    │
+    └── SessionList/            # Left sidebar
+        ├── SessionList.tsx
+        ├── SessionItem.tsx
+        └── NewSessionButton.tsx
 
 hooks/
-├── useSession.ts               # Session state management
-├── useBlocks.ts                # Block CRUD operations
 ├── useAuth.ts                 # user login
-└── useModal.ts                # Modal open/close state
+├── useBlocks.ts                # Block CRUD operations
+├── useModal.ts                # Modal open/close state
+└── useSession.ts               # Session state management
+
+lib/
+├── blockTreeUtils.ts           # Head-Body-Tail utils
+├── firebase.ts                (# empty now)
+├── gemini.ts                   # groq API client
+├── storage.ts                  # Data persistence logic
+└── types.ts                    # TypeScript types (Session, Block)
 
 ---
 
@@ -144,12 +145,13 @@ hooks/
 ### In Scope (MVP)
 - Block-based UI
 - mind-map style Free block positioning
-- Block-centered modal interaction
-- Gemini API integration
+- Head-Body-Tail structure
+- Block version history(only version)
+- LLM API integration(groq)
 - Session-based navigation
 
 ### Out of Scope
 - Full graph 
-- Block version history
+- Block version history(detail)
 - Collaboration / sharing
 - Mobile optimization

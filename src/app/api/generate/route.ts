@@ -1,57 +1,85 @@
+//===src/app/api/generate/route.ts
+
 import Groq from "groq-sdk";
 import { NextResponse } from "next/server";
 
-// 1. Groq 클라이언트 초기화
-// .env.local에 GROQ_API_KEY가 있어야 합니다.
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
 export async function POST(req: Request) {
   try {
-    const { question } = await req.json();
+    const { question, parentTail, mode = 'generate' } = await req.json();
 
     if (!question) {
       return NextResponse.json({ error: "질문이 없습니다." }, { status: 400 });
     }
 
-    // 2. Groq API 호출 (Chat Completion 방식)
+    // ========================================
+    // 1. 답변 생성 (GENERATE or REGENERATE)
+    // ========================================
+    const systemPrompt = `
+You are a great thinker operating in a Head-Body-Tail block system.
+
+[Block Structure Understanding]
+- Head: Summary from parent block (context)
+- Body: User question + AI answer
+- Tail: Summary of this block (for children to reference)
+
+[Answer Format Rules]
+0. ANSWER in KOREAN.
+1. First line: Always begin with "[요약]" and concisely summarize the key conclusions in 1-2 sentences.
+2. Second line: Space (Enter)
+3. From the third line onwards: Write a detailed answer in Markdown format.
+4. If Head context exists, naturally continue from it WITHOUT meta-references like "이전 블록에서...".
+
+${mode === 'regenerate' ? '[REGENERATION MODE] The parent block was updated. Regenerate answer reflecting new context while keeping the question essence.' : ''}
+    `;
+
+    // 프롬프트 구성
+    let userPrompt = question;
+    if (parentTail) {
+      userPrompt = `[부모 블록 요약 (Head)]\n${parentTail}\n\n[질문]\n${question}\n\n위 맥락을 자연스럽게 이어받아 답변하세요.`;
+    }
+
+    // API 호출
     const completion = await groq.chat.completions.create({
-      // messages 배열: 대화의 맥락을 형성합니다.
       messages: [
-        {
-          // [핵심] 시스템 페르소나 설정 (기존 systemInstruction 역할)
-          role: "system",
-          content: `
-            You are a great thinker. You know every valid and meaningful statement exist only in a certain world model. 
-            So you will use language to describe/simulate a suitable world model, and do reasoning within this model. 
-            You will always follow this strategy.
-            Please strictly adhere to the answer format to improve readability in the small card-style UI.
-
-            [Answer Format Rules]
-            0. ANSWER in KOREAN.
-            1. First line: Always begin with "[요약]" and concisely summarize the key conclusions of your answer in 1-2 sentences.
-            2. Second line: Space (Enter)
-            3. From the third line onwards: Write a detailed answer in Markdown format. Omit unnecessary introductions.
-          `,
-        },
-        {
-          // 사용자 질문
-          role: "user",
-          content: question,
-        },
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
       ],
-      // 3. 모델 선택
       model: "openai/gpt-oss-120b",
-
-      // 선택 옵션 (창의성 조절: 0.0 ~ 2.0)
       temperature: 0.7,
     });
 
-    // 4. 응답 추출
-    const text = completion.choices[0]?.message?.content || "";
+    const answer = completion.choices[0]?.message?.content || "";
 
-    return NextResponse.json({ answer: text });
+    // ========================================
+    // 2. Tail 생성 (답변 요약)
+    // ========================================
+    const tailCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: "다음 Q&A의 핵심을 1-2문장으로 간결하게 요약하세요. 메타 언급 없이 내용만 추출하세요. 반드시 한국어로 답변하세요."
+        },
+        {
+          role: "user",
+          content: `질문: ${question}\n\n답변: ${answer}\n\n위 내용을 1-2문장으로 요약:`
+        }
+      ],
+      model: "openai/gpt-oss-120b",
+      temperature: 0.3,
+      max_tokens: 256
+    });
+
+    const tail = tailCompletion.choices[0]?.message?.content || answer.split('\n')[0];
+
+    return NextResponse.json({ 
+      answer,
+      tail,
+      head: parentTail || null
+    });
 
   } catch (error: unknown) {
     console.error("Groq API Error:", error);

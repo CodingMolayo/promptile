@@ -1,3 +1,5 @@
+//===src/app/page.tsx
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -23,10 +25,12 @@ export default function BlockLLMChatApp() {
   // clearBlocks는 이제 사용하지 않으므로 제거합니다.
   const { 
     blocks, 
+    createBlockWithAI, 
     updateBlockQuestion, 
     updateBlockPosition, 
-    createBlockWithAI 
+    regenerateDirtyBlock 
   } = useBlocks();
+
   
   const { isOpen, mode, selectedBlock, openModal, closeModal } = useModal();
   
@@ -113,6 +117,7 @@ export default function BlockLLMChatApp() {
           onContinueBlock={(b) => openModal('continue', b)}
           onCreateBlock={() => openModal('continue', null)}
           onBlockPositionUpdate={updateBlockPosition}
+          onRegenerateBlock={regenerateDirtyBlock}
         />
       </div>
 

@@ -1,3 +1,4 @@
+//===src/app/BlockBoard/EmptyBoardState.tsx
 
 import { MessageSquare } from 'lucide-react';
 

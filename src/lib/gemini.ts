@@ -1,3 +1,5 @@
+//===src/lib/gemini.ts
+
 // 서버 API 엔드포인트로 질문을 보내고 답변을 받아오는 함수
 export const generateAnswer = async (question: string): Promise<string> => {
     try {

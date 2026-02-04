@@ -1,3 +1,5 @@
+//===src/hooks/useSession.ts
+
 import { useState, useEffect } from 'react';
 import { Session } from '@/lib/types';
 import { storage } from '@/lib/storage';

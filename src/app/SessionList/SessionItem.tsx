@@ -1,3 +1,5 @@
+//===src/app/SessionList/SessionItem.tsx
+
 import React, { useState } from 'react';
 import { MessageSquare, Edit2, Check, Trash2 } from 'lucide-react';
 import { Session } from '@/lib/types';

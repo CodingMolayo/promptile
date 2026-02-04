@@ -1,3 +1,5 @@
+//===src/app/BlockBoard/BlockActionMenu.tsx
+
 import React from 'react';
 import { Eye, Edit, ArrowRight } from 'lucide-react';
 

@@ -1,3 +1,5 @@
+//===src/app/SessionList/SessionList.tsx
+
 import React from 'react';
 import { Session } from '@/lib/types';
 import SessionItem from './SessionItem';
