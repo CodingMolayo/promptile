@@ -115,7 +115,7 @@ export default function BlockCard({
       {/* Tail - Summary for Children */}
       {block.tail && (
         <div className="mt-3 p-2 bg-gray-50 rounded border-l-4 border-gray-400">
-          <div className="text-[10px] font-semibold text-gray-600 mb-1">↓ Summary (for children)</div>
+          <div className="text-[10px] font-semibold text-gray-600 mb-1">↓ Summary</div>
           <div className="text-xs text-gray-600 line-clamp-2">{block.tail}</div>
         </div>
       )}
