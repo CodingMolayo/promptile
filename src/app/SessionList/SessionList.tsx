@@ -10,8 +10,8 @@ interface SessionListProps {
   currentSessionId: string | null;
   onSelectSession: (id: string) => void;
   onNewSession: () => void;
-  onUpdateTitle: (id: string, title: string) => void; // 추가됨
-  onDeleteSession: (id: string) => void; // 추가됨
+  onUpdateTitle: (id: string, title: string) => void;
+  onDeleteSession: (id: string) => void;
 }
 
 export default function SessionList({ 
@@ -38,6 +38,10 @@ export default function SessionList({
             onDelete={onDeleteSession}
           />
         ))}
+      </div>
+      {/* Version Info */}
+      <div className="mt-auto p-4 text-center text-xs text-gray-500">
+        v0.1.1 무한 캔버스
       </div>
     </div>
   );

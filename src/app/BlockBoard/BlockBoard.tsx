@@ -1,42 +1,46 @@
 //===src/app/BlockBoard/BlockBoard.tsx
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Plus, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Plus, ZoomIn, ZoomOut, Maximize2, Move } from 'lucide-react';
 import { Block } from '@/lib/types';
 import BlockCard from './BlockCard';
 import EmptyBoardState from './EmptyBoardState';
 
+// === 연결선 컴포넌트 ===
 function ConnectionLines({ blocks, scale }: { blocks: Block[], scale: number }) {
   const lines = blocks.filter(block => block.parentBlockId).map(block => {
     const parent = blocks.find(b => b.id === block.parentBlockId);
     if (!parent) return null;
     
+    // 블록의 중심점 (BlockCard 크기: 300x200)
     const startX = parent.position.x + 150;
     const startY = parent.position.y + 100;
+
     const endX = block.position.x + 150;
     const endY = block.position.y + 100;
     const midX = (startX + endX) / 2;
-
-    const strokeColor = block.isDirty ? '#f97316' : '#3b82f6';
-    const strokeDasharray = block.isDirty ? '4,4' : '8,4';
 
     return (
       <path
         key={`line-${parent.id}-${block.id}`}
         d={`M ${startX} ${startY} C ${midX} ${startY}, ${midX} ${endY}, ${endX} ${endY}`}
-        stroke={strokeColor}
-        strokeWidth={3 / scale} // 줌에 따라 선 두께 조정
+        stroke={block.isDirty ? '#f97316' : '#3b82f6'}
+        strokeWidth={3 / scale} 
         fill="none"
-        strokeDasharray={strokeDasharray}
+        strokeDasharray={block.isDirty ? '4,4' : '8,4'}
         opacity={block.isDirty ? 0.4 : 0.6}
       />
     );
   });
   
-  const maxX = Math.max(...blocks.map(b => b.position.x), 0) + 500;
-  const maxY = Math.max(...blocks.map(b => b.position.y), 0) + 500;
-
-  return <svg className="absolute top-0 left-0 pointer-events-none" style={{ width: maxX, height: maxY, zIndex: 1 }}>{lines}</svg>;
+  return (
+    <svg 
+      className="absolute top-0 left-0 pointer-events-none" 
+      style={{ width: '1px', height: '1px', overflow: 'visible', zIndex: 0 }}
+    >
+      {lines}
+    </svg>
+  );
 }
 
 interface BlockBoardProps {
@@ -52,116 +56,167 @@ interface BlockBoardProps {
 }
 
 export default function BlockBoard(props: BlockBoardProps) {
-  const [scale, setScale] = useState(1.0); // 초기 스케일 100%
-  const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1.0);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
   
-  const MIN_SCALE = 0.25; // 25%까지 축소
-  const MAX_SCALE = 2.0;  // 200%까지 확대
-  const SCALE_STEP = 0.1; // 10% 단위 조절
+  const containerRef = useRef<HTMLDivElement>(null);
+  const panStartRef = useRef<{ x: number, y: number }>({ x: 0, y: 0 });
+  
+  const touchStartDistRef = useRef<number>(0);
+  const touchStartScaleRef = useRef<number>(1.0);
 
-  // ========================================
-  // 줌 함수들
-  // ========================================
-  const zoomIn = () => {
-    setScale(prev => Math.min(prev + SCALE_STEP, MAX_SCALE));
-  };
+  const MIN_SCALE = 0.25;
+  const MAX_SCALE = 2.0;
+  const SCALE_STEP = 0.1;
 
-  const zoomOut = () => {
-    setScale(prev => Math.max(prev - SCALE_STEP, MIN_SCALE));
-  };
+  const getInitialBlock = useCallback(() => {
+    if (props.blocks.length === 0) return null;
+    return props.blocks.find(b => !b.parentBlockId) || props.blocks[0];
+  }, [props.blocks]);
 
+  const centerToBlock = useCallback((block: Block | null, targetScale: number = 1.0) => {
+    if (!block || !containerRef.current) return;
+    const container = containerRef.current;
+    
+    const blockCenterX = block.position.x + 150; // BlockCard width/2
+    const blockCenterY = block.position.y + 100; // BlockCard height/2
+
+    const newPanX = (container.clientWidth / 2) - (blockCenterX * targetScale);
+    const newPanY = (container.clientHeight / 2) - (blockCenterY * targetScale);
+
+    setPan({ x: newPanX, y: newPanY });
+    setScale(targetScale);
+  }, []);
+
+  const zoomIn = () => setScale(prev => Math.min(prev + SCALE_STEP, MAX_SCALE));
+  const zoomOut = () => setScale(prev => Math.max(prev - SCALE_STEP, MIN_SCALE));
+  
   const resetZoom = () => {
-    setScale(1.0);
+    const rootBlock = getInitialBlock();
+    if (rootBlock) {
+      centerToBlock(rootBlock, 1.0);
+    } else {
+      setPan({ x: 0, y: 0 });
+      setScale(1.0);
+    }
   };
 
-  // ========================================
-  // PC: Ctrl + 마우스 휠
-  // ========================================
+  useEffect(() => {
+    if (props.blocks.length > 0 && pan.x === 0 && pan.y === 0) {
+       setTimeout(() => resetZoom(), 50); 
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); 
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const handleWheel = (e: WheelEvent) => {
-      // Ctrl 키 (Windows) 또는 Cmd 키 (Mac) 눌렀을 때만
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
-        
         const delta = e.deltaY > 0 ? -SCALE_STEP : SCALE_STEP;
-        setScale(prev => {
-          const newScale = prev + delta;
-          return Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
-        });
+        setScale(prev => Math.max(MIN_SCALE, Math.min(MAX_SCALE, prev + delta)));
       }
     };
-
     container.addEventListener('wheel', handleWheel, { passive: false });
     return () => container.removeEventListener('wheel', handleWheel);
   }, []);
 
-  // ========================================
-  // 모바일: 핀치 줌
-  // ========================================
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    if ((e.target as HTMLElement).closest('.block-card')) return;
 
-    let initialDistance = 0;
-    let initialScale = 1.0;
+    setIsPanning(true);
+    panStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+  };
 
-    const getDistance = (touch1: Touch, touch2: Touch) => {
-      const dx = touch1.clientX - touch2.clientX;
-      const dy = touch1.clientY - touch2.clientY;
-      return Math.sqrt(dx * dx + dy * dy);
-    };
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isPanning) return;
+    e.preventDefault();
+    setPan({
+      x: e.clientX - panStartRef.current.x,
+      y: e.clientY - panStartRef.current.y
+    });
+  };
 
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 2) {
-        e.preventDefault();
-        initialDistance = getDistance(e.touches[0], e.touches[1]);
-        initialScale = scale;
-      }
-    };
+  const handleMouseUp = () => {
+    setIsPanning(false);
+  };
 
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 2) {
-        e.preventDefault();
-        const currentDistance = getDistance(e.touches[0], e.touches[1]);
-        const scaleChange = currentDistance / initialDistance;
-        const newScale = initialScale * scaleChange;
-        
-        setScale(Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale)));
-      }
-    };
+  const getDistance = (touch1: React.Touch, touch2: React.Touch) => {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
 
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if ((e.target as HTMLElement).closest('.block-card')) return;
 
-    return () => {
-      canvas.removeEventListener('touchstart', handleTouchStart);
-      canvas.removeEventListener('touchmove', handleTouchMove);
-    };
-  }, [scale]);
+    if (e.touches.length === 1) {
+      setIsPanning(true);
+      panStartRef.current = { 
+        x: e.touches[0].clientX - pan.x, 
+        y: e.touches[0].clientY - pan.y 
+      };
+    } else if (e.touches.length === 2) {
+      setIsPanning(false);
+      touchStartDistRef.current = getDistance(e.touches[0], e.touches[1]);
+      touchStartScaleRef.current = scale;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if ((e.target as HTMLElement).closest('.block-card')) return;
+
+    if (isPanning && e.touches.length === 1) {
+      const x = e.touches[0].clientX - panStartRef.current.x;
+      const y = e.touches[0].clientY - panStartRef.current.y;
+      setPan({ x, y });
+    } else if (e.touches.length === 2) {
+      const currentDist = getDistance(e.touches[0], e.touches[1]);
+      const scaleChange = currentDist / touchStartDistRef.current;
+      const newScale = touchStartScaleRef.current * scaleChange;
+      setScale(Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale)));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsPanning(false);
+  };
 
   if (props.blocks.length === 0) return <EmptyBoardState onCreateBlock={props.onCreateBlock} />;
 
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-full overflow-auto bg-gray-50"
+      className={`relative w-full h-full bg-gray-50 overflow-hidden select-none touch-none ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
-      {/* Canvas with Transform */}
       <div 
-        ref={canvasRef}
-        className="relative origin-top-left transition-transform duration-200 ease-out"
+        className="absolute inset-0 pointer-events-none opacity-10"
+        style={{
+            backgroundImage: 'radial-gradient(#000 1px, transparent 1px)',
+            backgroundSize: `${20 * scale}px ${20 * scale}px`,
+            backgroundPosition: `${pan.x}px ${pan.y}px`
+        }}
+      />
+
+      <div 
+        className="absolute top-0 left-0 origin-top-left will-change-transform"
         style={{ 
-          minWidth: '2000px', 
-          minHeight: '2000px',
-          transform: `scale(${scale})`,
-          transformOrigin: '0 0'
+          transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
         }}
       >
         <ConnectionLines blocks={props.blocks} scale={scale} />
+        
         {props.blocks.map(block => (
           <BlockCard
             key={block.id}
@@ -177,64 +232,38 @@ export default function BlockBoard(props: BlockBoardProps) {
         ))}
       </div>
 
-      {/* Zoom Controls - 우측 하단 */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-30">
-        {/* 줌 인 버튼 */}
-        <button
-          onClick={zoomIn}
-          disabled={scale >= MAX_SCALE}
-          className="w-12 h-12 bg-white border-2 border-gray-300 rounded-lg shadow-lg flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          title="Zoom In (Ctrl + Scroll Up)"
-        >
-          <ZoomIn size={20} className="text-gray-700" />
-        </button>
-
-        {/* 스케일 표시 */}
-        <div className="w-12 h-12 bg-white border-2 border-gray-300 rounded-lg shadow-lg flex items-center justify-center">
-          <span className="text-xs font-bold text-gray-700">
-            {Math.round(scale * 100)}%
-          </span>
-        </div>
-
-        {/* 줌 아웃 버튼 */}
-        <button
-          onClick={zoomOut}
-          disabled={scale <= MIN_SCALE}
-          className="w-12 h-12 bg-white border-2 border-gray-300 rounded-lg shadow-lg flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          title="Zoom Out (Ctrl + Scroll Down)"
-        >
-          <ZoomOut size={20} className="text-gray-700" />
-        </button>
-
-        {/* 리셋 버튼 */}
-        <button
-          onClick={resetZoom}
-          className="w-12 h-12 bg-white border-2 border-gray-300 rounded-lg shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-          title="Reset Zoom (100%)"
-        >
-          <Maximize2 size={20} className="text-gray-700" />
-        </button>
-
-        {/* Create Block 버튼 - 줌 컨트롤 아래 */}
-        <div className="mt-4">
-          <button 
-            onClick={props.onCreateBlock} 
-            className="w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors"
-            title="Create New Block"
-          >
-            <Plus size={24} />
-          </button>
+      <div className="fixed top-6 right-6 flex flex-col items-end gap-2 z-50">
+        <div className="flex items-center gap-2 bg-white/80 backdrop-blur rounded-lg p-1 shadow-sm border border-gray-200">
+            <button onClick={zoomIn} className="p-2 hover:bg-gray-100 rounded-md text-gray-700">
+              <ZoomIn size={20} />
+            </button>
+            <span className="w-12 text-center text-sm font-medium text-gray-700">
+                {Math.round(scale * 100)}%
+            </span>
+            <button onClick={zoomOut} className="p-2 hover:bg-gray-100 rounded-md text-gray-700">
+              <ZoomOut size={20} />
+            </button>
+            <div className="w-px h-6 bg-gray-200 mx-1"></div>
+            <button onClick={resetZoom} className="p-2 hover:bg-blue-50 text-blue-600 rounded-md" title="Center View">
+              <Maximize2 size={20} />
+            </button>
         </div>
       </div>
+      
+      <div className="fixed bottom-6 right-6 z-50">
+        <button 
+        onClick={props.onCreateBlock} 
+        className="w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-transform active:scale-95"
+        >
+        <Plus size={24} />
+        </button>
+      </div>
 
-      {/* 줌 가이드 (처음 사용자용 - 선택사항) */}
       {scale === 1.0 && props.blocks.length > 0 && (
-        <div className="fixed bottom-24 left-6 bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700 shadow-md z-20 max-w-xs">
-          <div className="font-semibold mb-1">💡 Zoom Tip</div>
-          <div className="text-xs">
-            <span className="hidden md:inline">Ctrl + 마우스 휠</span>
-            <span className="md:hidden">두 손가락 핀치</span>
-            로 확대/축소 가능
+        <div className="fixed bottom-6 left-6 bg-white/90 backdrop-blur border border-gray-200 rounded-lg p-3 text-sm text-gray-600 shadow-sm z-40 pointer-events-none">
+          <div className="flex items-center gap-2">
+            <Move size={14} />
+            <span>Drag empty space to pan</span>
           </div>
         </div>
       )}
