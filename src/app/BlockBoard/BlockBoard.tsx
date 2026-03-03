@@ -1,10 +1,12 @@
 //===src/app/BlockBoard/BlockBoard.tsx
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Plus, ZoomIn, ZoomOut, Maximize2, Move } from 'lucide-react';
+import { Plus, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { Block } from '@/lib/types';
 import BlockCard from './BlockCard';
 import EmptyBoardState from './EmptyBoardState';
+import SessionKeywords from './SessionKeywords';
+
 
 // === 연결선 컴포넌트 ===
 function ConnectionLines({ blocks, scale }: { blocks: Block[], scale: number }) {
@@ -53,6 +55,10 @@ interface BlockBoardProps {
   onCreateBlock: () => void;
   onBlockPositionUpdate: (blockId: string, position: { x: number; y: number }) => void;
   onRegenerateBlock?: (blockId: string) => void;
+  sessionKeywords: string[];
+  isKeywordsManual: boolean;
+  onUpdateKeywords: (keywords: string[]) => void;
+  onRegenerateKeywords: () => void;
 }
 
 export default function BlockBoard(props: BlockBoardProps) {
@@ -200,15 +206,17 @@ export default function BlockBoard(props: BlockBoardProps) {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Background Grid */}
       <div 
         className="absolute inset-0 pointer-events-none opacity-10"
         style={{
-            backgroundImage: 'radial-gradient(#000 1px, transparent 1px)',
-            backgroundSize: `${20 * scale}px ${20 * scale}px`,
-            backgroundPosition: `${pan.x}px ${pan.y}px`
+          backgroundImage: 'radial-gradient(#000 1px, transparent 1px)',
+          backgroundSize: `${20 * scale}px ${20 * scale}px`,
+          backgroundPosition: `${pan.x}px ${pan.y}px`
         }}
       />
 
+      {/* Canvas with Blocks */}
       <div 
         className="absolute top-0 left-0 origin-top-left will-change-transform"
         style={{ 
@@ -232,41 +240,44 @@ export default function BlockBoard(props: BlockBoardProps) {
         ))}
       </div>
 
-      <div className="fixed top-6 right-6 flex flex-col items-end gap-2 z-50">
-        <div className="flex items-center gap-2 bg-white/80 backdrop-blur rounded-lg p-1 shadow-sm border border-gray-200">
-            <button onClick={zoomIn} className="p-2 hover:bg-gray-100 rounded-md text-gray-700">
-              <ZoomIn size={20} />
-            </button>
-            <span className="w-12 text-center text-sm font-medium text-gray-700">
-                {Math.round(scale * 100)}%
-            </span>
-            <button onClick={zoomOut} className="p-2 hover:bg-gray-100 rounded-md text-gray-700">
-              <ZoomOut size={20} />
-            </button>
-            <div className="w-px h-6 bg-gray-200 mx-1"></div>
-            <button onClick={resetZoom} className="p-2 hover:bg-blue-50 text-blue-600 rounded-md" title="Center View">
-              <Maximize2 size={20} />
-            </button>
-        </div>
-      </div>
-      
-      <div className="fixed bottom-6 right-6 z-50">
-        <button 
-        onClick={props.onCreateBlock} 
-        className="w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-transform active:scale-95"
-        >
-        <Plus size={24} />
-        </button>
+      {/* 🆕 Keyword Component - 우하단 (Create button 왼쪽) */}
+      <div className="fixed bottom-6 right-24 z-20 max-w-md">
+        <SessionKeywords
+          keywords={props.sessionKeywords}
+          isManual={props.isKeywordsManual}
+          onUpdate={props.onUpdateKeywords}
+          onRegenerate={props.onRegenerateKeywords}
+        />
       </div>
 
-      {scale === 1.0 && props.blocks.length > 0 && (
-        <div className="fixed bottom-6 left-6 bg-white/90 backdrop-blur border border-gray-200 rounded-lg p-3 text-sm text-gray-600 shadow-sm z-40 pointer-events-none">
-          <div className="flex items-center gap-2">
-            <Move size={14} />
-            <span>Drag empty space to pan</span>
-          </div>
+      {/* Zoom Controls - 우측 상단 고정 */}
+      <div className="fixed top-6 right-6 flex flex-col items-end gap-2 z-20">
+        <div className="flex items-center gap-2 bg-white/80 backdrop-blur rounded-lg p-1 shadow-sm border border-gray-200">
+          <button onClick={zoomIn} className="p-2 hover:bg-gray-100 rounded-md text-gray-700">
+            <ZoomIn size={20} />
+          </button>
+          <span className="w-12 text-center text-sm font-medium text-gray-700">
+            {Math.round(scale * 100)}%
+          </span>
+          <button onClick={zoomOut} className="p-2 hover:bg-gray-100 rounded-md text-gray-700">
+            <ZoomOut size={20} />
+          </button>
+          <div className="w-px h-6 bg-gray-200 mx-1"></div>
+          <button onClick={resetZoom} className="p-2 hover:bg-blue-50 text-blue-600 rounded-md" title="Center View">
+            <Maximize2 size={20} />
+          </button>
         </div>
-      )}
+      </div>
+        
+      {/* Create Button - 우측 하단 고정 */}
+      <div className="fixed bottom-6 right-6 z-20">
+        <button 
+          onClick={props.onCreateBlock} 
+          className="w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-transform active:scale-95"
+        >
+          <Plus size={24} />
+        </button>
+      </div>
     </div>
   );
 }

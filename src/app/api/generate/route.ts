@@ -9,7 +9,12 @@ const groq = new Groq({
 
 export async function POST(req: Request) {
   try {
-    const { question, parentTail, mode = 'generate' } = await req.json();
+    const { 
+      question, 
+      parentTail, 
+      mode = 'generate', 
+      sessionKeywords = [] // 🆕 추가
+    } = await req.json();
 
     if (!question) {
       return NextResponse.json({ error: "질문이 없습니다." }, { status: 400 });
@@ -41,6 +46,12 @@ ${mode === 'regenerate' ? '[REGENERATION MODE] The parent block was updated. Reg
     let userPrompt = question;
     if (parentTail) {
       userPrompt = `[부모 블록 요약 (Head)]\n${parentTail}\n\n[질문]\n${question}\n\n위 맥락을 자연스럽게 이어받아 답변하세요.`;
+    }
+
+    // 🆕 키워드가 있으면 컨텍스트에 추가
+    if (sessionKeywords.length > 0) {
+      const keywordsText = `[이 대화의 주제 키워드]\n${sessionKeywords.join(', ')}\n\n`;
+      userPrompt = keywordsText + userPrompt;
     }
 
     // API 호출

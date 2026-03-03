@@ -80,10 +80,13 @@ export const storage = {
   // Sessions
   // ========================================
   saveSessions: (sessions: Session[]) => {
-    localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+    }
   },
   
   loadSessions: (): Session[] => {
+    if (typeof window === 'undefined') return [];
     const data = localStorage.getItem(SESSIONS_KEY);
     if (!data) return [];
     
@@ -102,11 +105,14 @@ export const storage = {
   // Blocks with Migration
   // ========================================
   saveBlocks: (blocks: Block[]) => {
-    localStorage.setItem(BLOCKS_KEY, JSON.stringify(blocks));
-    localStorage.setItem(STORAGE_VERSION_KEY, CURRENT_VERSION);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(BLOCKS_KEY, JSON.stringify(blocks));
+      localStorage.setItem(STORAGE_VERSION_KEY, CURRENT_VERSION);
+    }
   },
   
   loadBlocks: (): Block[] => {
+    if (typeof window === 'undefined') return [];
     const data = localStorage.getItem(BLOCKS_KEY);
     const version = localStorage.getItem(STORAGE_VERSION_KEY);
     
@@ -171,16 +177,19 @@ export const storage = {
   // Utility: Clear All Data
   // ========================================
   clearAll: () => {
-    localStorage.removeItem(SESSIONS_KEY);
-    localStorage.removeItem(BLOCKS_KEY);
-    localStorage.removeItem(STORAGE_VERSION_KEY);
-    console.log('🗑️ All data cleared');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(SESSIONS_KEY);
+      localStorage.removeItem(BLOCKS_KEY);
+      localStorage.removeItem(STORAGE_VERSION_KEY);
+      console.log('🗑️ All data cleared');
+    }
   },
 
   // ========================================
   // Utility: Export/Import (백업용)
   // ========================================
   exportData: () => {
+    if (typeof window === 'undefined') return null;
     return {
       version: CURRENT_VERSION,
       sessions: storage.loadSessions(),
@@ -190,6 +199,7 @@ export const storage = {
   },
 
   importData: (data: { sessions: Session[], blocks: Block[] }) => {
+    if (typeof window === 'undefined') return false;
     try {
       storage.saveSessions(data.sessions);
       storage.saveBlocks(data.blocks);

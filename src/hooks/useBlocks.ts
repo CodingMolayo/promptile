@@ -28,16 +28,19 @@ export function useBlocks() {
   const clearBlocks = () => setBlocks([]);
 
   // ========================================
-  // 🆕 블록 생성 with AI
+  // 블록 생성 with AI
+  // 🆕 sessionKeywords 파라미터 추가 (선택적)
   // ========================================
   const createBlockWithAI = async (
     sessionId: string, 
     question: string, 
     position: { x: number, y: number }, 
-    parentBlockId?: string
+    parentBlockId?: string,
+    sessionKeywords?: string[] // 🆕 추가 (기존 호출 코드는 그대로 작동)
   ) => {
     const parent = parentBlockId ? blocks.find(b => b.id === parentBlockId) : undefined;
     const parentTail = parent?.tail || null;
+
 
     // 1. 로딩 블록 생성
     const newBlock: Block = {
@@ -69,7 +72,8 @@ export function useBlocks() {
         body: JSON.stringify({ 
           question, 
           parentTail,
-          mode: 'generate'
+          mode: 'generate',
+          sessionKeywords: sessionKeywords || [] // 🆕 전달
         })
       });
 
@@ -92,9 +96,14 @@ export function useBlocks() {
   };
 
   // ========================================
-  // 🆕 블록 수정 with Cascade Confirmation
+  // 블록 수정 with Cascade Confirmation
+  // 🆕 sessionKeywords 파라미터 추가
   // ========================================
-  const updateBlockQuestion = async (blockId: string, newQuestion: string) => {
+  const updateBlockQuestion = async (
+    blockId: string, 
+    newQuestion: string,
+    sessionKeywords?: string[] // 🆕 추가
+  ) => {
     const block = blocks.find(b => b.id === blockId);
     if (!block) return;
 
@@ -122,7 +131,8 @@ export function useBlocks() {
         body: JSON.stringify({ 
           question: newQuestion, 
           parentTail: block.head,
-          mode: 'regenerate'
+          mode: 'regenerate',
+          sessionKeywords: sessionKeywords || [] // 🆕 전달
         })
       });
 
@@ -151,9 +161,13 @@ export function useBlocks() {
   };
 
   // ========================================
-  // 🆕 Dirty 블록 재생성 (On-demand)
+  // Dirty 블록 재생성 (On-demand)
+  // 🆕 sessionKeywords 파라미터 추가
   // ========================================
-  const regenerateDirtyBlock = async (blockId: string) => {
+  const regenerateDirtyBlock = async (
+    blockId: string,
+    sessionKeywords?: string[] // 🆕 추가
+  ) => {
     const block = blocks.find(b => b.id === blockId);
     if (!block || !block.needsRegeneration) return;
 
@@ -174,7 +188,8 @@ export function useBlocks() {
         body: JSON.stringify({ 
           question: block.body.question, 
           parentTail: parent.tail,
-          mode: 'regenerate'
+          mode: 'regenerate',
+          sessionKeywords: sessionKeywords || [] // 🆕 전달
         })
       });
 

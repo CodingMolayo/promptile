@@ -12,7 +12,7 @@ export interface Block {
   };
   tail: string;                  // 이 블록의 요약 (child의 head)
   
-  // Blockchain 추적
+  // Block-chain 추적
   parentBlockId?: string;
   lastParentTail?: string;       // 생성 시점의 parent tail
   
@@ -31,6 +31,12 @@ export interface Session {
   id: string;
   title: string;
   createdAt: Date;
+
+  // 키워드 관리
+  keywords?: string[];
+  keywordsUpdatedAt?: Date;
+  keywordsManual?: boolean;
+  // keywordsGeneratedFromBlockCount 제거 (더 이상 사용 안 함)
 }
 
 export type ModalMode = 'view' | 'edit' | 'continue' | null;
