@@ -4,27 +4,29 @@ import { useState, useEffect } from 'react';
 import { Session, Block } from '@/lib/types';
 import { storage } from '@/lib/storage';
 
-const getInitialSessions = () => {
-  const saved = storage.loadSessions();
-  if (saved.length > 0) {
-    return saved;
-  }
-  const defaultSession = {
-    id: '1',
-    title: 'New Conversation',
-    createdAt: new Date(),
-  };
-  storage.saveSessions([defaultSession]);
-  return [defaultSession];
-};
-
 export function useSession() {
-  const [sessions, setSessions] = useState<Session[]>(getInitialSessions);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(() => sessions.length > 0 ? sessions[0].id : null);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
+  // ========================================
+  // 기존 코드 (전혀 수정 안 함)
+  // ========================================
   useEffect(() => {
-    storage.saveSessions(sessions);
-  }, [sessions]);
+    const saved = storage.loadSessions();
+    if (saved.length > 0) {
+      setSessions(saved);
+      setCurrentSessionId(saved[0].id);
+    } else {
+      const defaultSession = { 
+        id: '1', 
+        title: 'New Conversation', 
+        createdAt: new Date() 
+      };
+      setSessions([defaultSession]);
+      setCurrentSessionId('1');
+      storage.saveSessions([defaultSession]);
+    }
+  }, []);
 
   const createSession = () => {
     const newSession = { 
@@ -35,17 +37,20 @@ export function useSession() {
     const updated = [newSession, ...sessions];
     setSessions(updated);
     setCurrentSessionId(newSession.id);
+    storage.saveSessions(updated);
     return newSession.id;
   };
 
   const updateSessionTitle = (id: string, newTitle: string) => {
     const updated = sessions.map(s => s.id === id ? { ...s, title: newTitle } : s);
     setSessions(updated);
+    storage.saveSessions(updated);
   };
 
   const deleteSession = (id: string) => {
     const updated = sessions.filter(s => s.id !== id);
     setSessions(updated);
+    storage.saveSessions(updated);
     
     if (currentSessionId === id) {
       if (updated.length > 0) {
@@ -58,6 +63,7 @@ export function useSession() {
         };
         setSessions([newSession]);
         setCurrentSessionId(newSession.id);
+        storage.saveSessions([newSession]);
       }
     }
   };
@@ -97,6 +103,7 @@ export function useSession() {
           : s
       );
       setSessions(updated);
+      storage.saveSessions(updated);
     } catch (error) {
       console.error('Failed to generate keywords:', error);
     }
@@ -117,6 +124,7 @@ export function useSession() {
         : s
     );
     setSessions(updated);
+    storage.saveSessions(updated);
   };
 
   /**
