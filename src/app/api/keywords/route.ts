@@ -26,16 +26,17 @@ export async function POST(req: Request) {
         {
           role: "system",
           content: `
-당신은 대화 주제를 분석하여 요약하는 전문가입니다.
-주어진 대화를 읽고, 핵심 키워드 3-5개를 추출하세요.
+You are an expert at analyzing and summarizing conversation topics.
+Read the given conversation and extract 3-5 key keywords.
 
-[규칙]
-1. 키워드는 명사 형태로 (예: "파이썬", "여행", "맛집")
-2. 구체적이고 명확하게 (예: "유럽 여행" > "여행")
-3. 너무 일반적이거나 추상적인 단어는 피하기
-4. 최소 3개, 최대 5개
-5. JSON 배열 형태로만 출력: ["키워드1", "키워드2", "키워드3"]
-6. 다른 텍스트는 포함하지 마세요.
+[Rules]
+0. ANSWER in KOREAN!
+1. Keywords should be nouns (e.g., "Python," "travel," "restaurant")
+2. Be specific and clear (e.g., "travel in Europe" is better then "travel")
+3. Avoid overly general or abstract words
+4. Minimum of 3, maximum of 5
+5. Output only as a JSON array: ["Keyword1", "Keyword2", "Keyword3"]
+6. Do not include any other text.
           `
         },
         {

@@ -37,7 +37,7 @@ export default function SessionList({
           className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
         >
           <Plus size={20} />
-          <span>Make new Tiles</span>
+          <span>캔버스 생성</span>
         </button>
       </div>
 
@@ -57,7 +57,7 @@ export default function SessionList({
       
       {/* Version Info */}
       <div className="mt-auto p-4 text-center text-xs text-gray-500">
-        v0.2.1 Add Keywords
+        v0.2.2 Add Keywords+언어
       </div>
     </div>
   );

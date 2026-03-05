@@ -17,6 +17,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Promptile",
   description: "Tile your Prompt",
+  manifest: "/manifest.ts",
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({

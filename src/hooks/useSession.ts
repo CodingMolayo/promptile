@@ -19,7 +19,7 @@ export function useSession() {
     } else {
       const defaultSession = { 
         id: '1', 
-        title: 'New Conversation', 
+        title: '첫번째 캔버스', 
         createdAt: new Date() 
       };
       setSessions([defaultSession]);
@@ -28,12 +28,32 @@ export function useSession() {
     }
   }, []);
 
-  const createSession = () => {
+  const CANVAS_ADJECTIVES = [
+    // 창의성
+    '기발한', '신선한', '창의적인', '독창적인', '영감 넘치는',
+    // 빛/색상
+    '반짝이는', '빛나는', '선명한', '화사한', '영롱한',
+    // 에너지
+    '활기찬', '생동감 있는', '경쾌한', '유쾌한', '열정적인',
+    // 평온
+    '고요한', '평온한', '차분한', '편안한', '여유로운',
+    // 추상
+    '자유로운', '무한한', '열린', '넓은', '깊은'
+  ];
+  
+  const getRandomCanvasTitle = () => {
+    const adjective = CANVAS_ADJECTIVES[Math.floor(Math.random() * CANVAS_ADJECTIVES.length)];
+    return `${adjective} 캔버스`;
+  };
+  
+  // 사용
+  const createSession = () => {  
     const newSession = { 
       id: Date.now().toString(), 
-      title: `New Session`, 
+      title: getRandomCanvasTitle(), // 🆕
       createdAt: new Date() 
     };
+  
     const updated = [newSession, ...sessions];
     setSessions(updated);
     setCurrentSessionId(newSession.id);

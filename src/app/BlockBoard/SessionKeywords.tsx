@@ -71,28 +71,53 @@ export default function SessionKeywords({
         <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
           <Tag size={16} className="text-blue-500" />
           주제 키워드
-          {isManual && (
+          {isManual && !isEditing && (
             <span className="text-xs text-gray-400">(수정됨)</span>
           )}
         </div>
-        {!isEditing && (
-          <div className="flex gap-1">
-            <button
-              onClick={handleStartEdit}
-              className="p-1.5 hover:bg-gray-100 rounded transition-colors"
-              title="키워드 편집"
-            >
-              <Edit2 size={14} className="text-gray-600" />
-            </button>
-            <button
-              onClick={onRegenerate}
-              className="p-1.5 hover:bg-gray-100 rounded transition-colors"
-              title="키워드 재생성"
-            >
-              <RefreshCw size={14} className="text-gray-600" />
-            </button>
-          </div>
-        )}
+  
+        {/* 편집 모드에 따라 버튼 변경 */}
+        <div className="flex gap-1">
+          {isEditing ? (
+            <>
+              {/* 저장 버튼 */}
+              <button
+                onClick={handleSave}
+                className="p-1.5 hover:bg-green-100 rounded transition-colors"
+                title="저장"
+              >
+                <Check size={16} className="text-green-600" />
+              </button>
+              {/* 취소 버튼 */}
+              <button
+                onClick={handleCancel}
+                className="p-1.5 hover:bg-red-100 rounded transition-colors"
+                title="취소"
+              >
+                <X size={16} className="text-red-600" />
+              </button>
+            </>
+          ) : (
+            <>
+              {/* 편집 버튼 */}
+              <button
+                onClick={handleStartEdit}
+                className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+                title="키워드 편집"
+              >
+                <Edit2 size={14} className="text-gray-600" />
+              </button>
+              {/* 재생성 버튼 */}
+              <button
+                onClick={onRegenerate}
+                className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+                title="키워드 재생성"
+              >
+                <RefreshCw size={14} className="text-gray-600" />
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* 표시 모드 */}
@@ -130,7 +155,7 @@ export default function SessionKeywords({
           </div>
 
           {tempKeywords.length < 7 && (
-            <div className="flex gap-2 mb-2">
+            <div className="flex gap-2">
               <input
                 type="text"
                 value={editValue}
@@ -147,23 +172,6 @@ export default function SessionKeywords({
               </button>
             </div>
           )}
-
-          <div className="flex gap-2">
-            <button
-              onClick={handleSave}
-              className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-            >
-              <Check size={14} />
-              저장
-            </button>
-            <button
-              onClick={handleCancel}
-              className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 border border-gray-300 text-gray-700 rounded text-sm hover:bg-gray-50"
-            >
-              <X size={14} />
-              취소
-            </button>
-          </div>
         </div>
       )}
     </div>

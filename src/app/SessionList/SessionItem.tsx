@@ -24,7 +24,7 @@ export default function SessionItem({ session, isActive, onSelect, onUpdateTitle
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this session?')) {
+    if (confirm('이 캔버스를 지울까?(복구되지 않아요!)')) {
       onDelete(session.id);
     }
   };
